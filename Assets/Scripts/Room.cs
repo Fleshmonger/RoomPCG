@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class Room : MonoBehaviour
 {
+    public float size = 1f;
     public List<RoomOpening> SideOpenings;
 
     public RoomOpening RandomOpening()
@@ -15,6 +16,19 @@ public class Room : MonoBehaviour
         else
         {
             return null;
+        }
+    }
+
+    public bool CollisionCheck(Room other)
+    {
+        Vector3 offset = other.transform.position - transform.position;
+        if (offset.magnitude <= size + other.size)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 

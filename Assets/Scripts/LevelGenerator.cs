@@ -4,18 +4,20 @@ using System.Collections.Generic;
 
 public class LevelGenerator : MonoBehaviour
 {
-    public int roomAmount = 5;
+    public int roomAmount = 5, maxAttempts = 5;
     public Room[] roomPrefabs;
 
     private void Awake()
     {
         // Initialize with starting room.
-        int roomCount = 1;
+        List<Room> rooms = new List<Room>();
         Room lastRoom = InstantiateRoom(RandomRoomPrefab(), Vector3.zero, Quaternion.identity);
         RoomOpening lastOpening = lastRoom.RandomOpening();
+        rooms.Add(lastRoom);
 
         // Loop to generate rest of the level.
-        while (roomCount < roomAmount)
+        int attempts = 0;
+        while (attempts < maxAttempts && rooms.Count < roomAmount)
         {
             // Instantiate
             Room nextRoom = InstantiateRoom(RandomRoomPrefab(), Vector3.zero, Quaternion.identity);
@@ -28,11 +30,37 @@ public class LevelGenerator : MonoBehaviour
             Vector3 position = lastOpening.transform.position + (nextRoom.transform.position - nextOpening.transform.position);
             nextRoom.transform.position = position;
 
+            // Check
+            bool valid = true;
+            foreach (Room room in rooms)
+            {
+                if (!room.Equals(lastRoom) && room.CollisionCheck(nextRoom))
+                {
+                    valid = false;
+                }
+            }
+
             // Loop
-            roomCount++;
-            nextRoom.RemoveOpening(nextOpening);
-            lastRoom = nextRoom;
-            lastOpening = nextRoom.RandomOpening();
+            if (valid)
+            {
+                rooms.Add(nextRoom);
+                nextRoom.RemoveOpening(nextOpening);
+                lastRoom = nextRoom;
+                lastOpening = nextRoom.RandomOpening();
+            }
+            else
+            {
+                attempts++;
+                Destroy(nextRoom.gameObject);
+            }
+        }
+        if (attempts < maxAttempts)
+        {
+            Debug.Log("Level generation complete.");
+        }
+        else
+        {
+            Debug.Log("Level generation interrupted.");
         }
     }
 
